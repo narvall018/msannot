@@ -132,3 +132,31 @@ def test_analog_protocol_and_network(toy_library):
     assert network.summary["n_nodes"] == len(toy_library)
     assert network.summary["n_edges"] >= 1
     assert (network.edges["score"] >= 0.5).all()
+
+
+def test_duplicate_summary(make_spectrum):
+    from msannot.config import SimilarityConfig
+    from msannot.search.library import SpectralLibrary
+
+    peaks = ([100.0, 150.0, 200.0, 250.0, 280.0], [1.0, 0.5, 0.3, 0.2, 0.1])
+    spectra = [
+        make_spectrum(*peaks, 300.0, "a", inchikey14="AAAAAAAAAAAAAA", contributor="lab1"),
+        make_spectrum(*peaks, 300.0, "b", inchikey14="AAAAAAAAAAAAAA", contributor="lab1"),
+        # même spectre, autre laboratoire et autre annotation : conflit
+        make_spectrum(*peaks, 300.0, "c", inchikey14="BBBBBBBBBBBBBB", contributor="lab2"),
+        make_spectrum(
+            [100.0, 160.0, 210.0, 260.0, 290.0],
+            [1, 1, 1, 1, 1],
+            300.0,
+            "d",
+            inchikey14="CCCCCCCCCCCCCC",
+            contributor="lab2",
+        ),
+    ]
+    summary = SpectralLibrary(spectra, SimilarityConfig()).duplicate_summary()
+    assert summary == {
+        "groups": 1,
+        "spectra": 3,
+        "cross_contributor_groups": 1,
+        "conflicting_annotation_groups": 1,
+    }

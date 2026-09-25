@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rapport msannot</title>
+<style>
+  :root { --surface:#fcfcfb; --page:#f4f3ef; --ink:#0b0b0b; --ink-2:#52514e; --line:#e1e0d9; --note:#fff7e6; --note-line:#eda100; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--page); color:var(--ink); font:15px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif; }
+  main { max-width:1100px; margin:0 auto; padding:32px 16px 64px; }
+  h1 { font-size:30px; margin:0 0 4px; }
+  h2 { font-size:22px; margin:40px 0 12px; padding-top:8px; border-top:1px solid var(--line); }
+  h3 { font-size:17px; margin:24px 0 8px; }
+  .subtitle { color:var(--ink-2); margin:0; }
+  .card { background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:16px 20px; margin:14px 0; }
+  .note { background:var(--note); border-left:3px solid var(--note-line); padding:10px 14px; border-radius:6px; }
+  .scroll { overflow-x:auto; }
+  table { border-collapse:collapse; width:100%; font-size:14px; }
+  th, td { text-align:left; padding:6px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { color:var(--ink-2); font-weight:600; }
+  td.num { font-variant-numeric:tabular-nums; }
+  figure { margin:18px 0; }
+  figure img { width:100%; height:auto; border:1px solid var(--line); border-radius:8px; background:#fff; }
+  figcaption { color:var(--ink-2); font-size:14px; margin-top:6px; }
+  figcaption strong { color:var(--ink); }
+  code { background:#eeede8; padding:1px 5px; border-radius:4px; font-size:13px; }
+  .levels { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:12px; }
+  .levels .card { margin:0; }
+  nav ul { columns:2; padding-left:18px; }
+  @media (max-width:640px) { nav ul { columns:1; } h1 { font-size:24px; } }
+</style>
+</head>
+<body>
+<main>
+{% set ident = s.identification %}
+{% set an = s.analogs %}
+<header>
+  <h1>Rapport msannot</h1>
+  <p class="subtitle">Annotation de petites molécules par spectres MS/MS : identification, analogues et cohérence spectre/structure</p>
+  <p class="subtitle">Généré le {{ generated }} · msannot {{ s.versions.msannot }} · jeu de données <code>{{ s.dataset.file }}</code></p>
+</header>
+
+<nav class="card"><strong>Sommaire</strong>
+<ul>
+  <li><a href="#bref">En bref</a></li><li><a href="#donnees">Données</a></li>
+  <li><a href="#parametres">Paramètres</a></li><li><a href="#methodes">Méthodes</a></li>
+  <li><a href="#identification">Identification</a></li><li><a href="#analogues">Analogues</a></li>
+  <li><a href="#relation">Spectre et structure</a></li><li><a href="#reseau">Réseau moléculaire</a></li>
+  <li><a href="#exemples">Exemples</a></li><li><a href="#interpretation">Interprétation</a></li>
+  <li><a href="#limites">Limites</a></li><li><a href="#reproductibilite">Reproductibilité</a></li>
+</ul></nav>
+
+<h2 id="bref">En bref</h2>
+<div class="card scroll">
+<p><strong>{{ s.dataset.n_library | number }}</strong> spectres, <strong>{{ s.dataset.n_compounds | number }}</strong> composés, <strong>{{ s.dataset.n_contributors | number }}</strong> laboratoires.</p>
+<table>
+  <thead><tr><th>Question</th>{% for m in s.config.similarity.metrics %}<th>{{ m | label }}</th>{% endfor %}<th>Référence</th></tr></thead>
+  <tbody>
+  {% for row_setting in ["other_labs", "all_labs"] %}
+    <tr>
+      <td>Identification top-1 — {{ settings[row_setting] | lower }}, requêtes avec concurrents</td>
+      {% set ref = namespace(v=None) %}
+      {% for m in s.config.similarity.metrics %}
+        {% for r in ident.summary if r.setting == row_setting and r.metric == m and r.subset == "avec concurrents" %}
+          <td class="num">{{ r.top1 | percent }}</td>{% set ref.v = r.random_top1 %}
+        {% endfor %}
+      {% endfor %}
+      <td class="num">{{ ref.v | percent }} (hasard)</td>
+    </tr>
+  {% endfor %}
+    <tr>
+      <td>Analogues : Tanimoto médian du 1er résultat</td>
+      {% for m in s.config.similarity.metrics %}{% for r in an.summary if r.method == m %}<td class="num">{{ r.median_tanimoto | number(2) }}</td>{% endfor %}{% endfor %}
+      <td class="num">{% for r in an.summary if r.method == "random" %}{{ r.median_tanimoto | number(2) }} (hasard){% endfor %} · {% for r in an.summary if r.method == "oracle" %}{{ r.median_tanimoto | number(2) }} (oracle){% endfor %}</td>
+    </tr>
+    <tr>
+      <td>Analogues : 1er résultat proche (Tanimoto ≥ {{ s.config.analogs.close_analog_threshold }})</td>
+      {% for m in s.config.similarity.metrics %}{% for r in an.summary if r.method == m %}<td class="num">{{ r.close_fraction | percent }}</td>{% endfor %}{% endfor %}
+      <td class="num">{% for r in an.summary if r.method == "random" %}{{ r.close_fraction | percent }} (hasard){% endfor %} · {% for r in an.summary if r.method == "oracle" %}{{ r.close_fraction | percent }} (oracle){% endfor %}</td>
+    </tr>
+  </tbody>
+</table>
+{% if s.network %}<p>Réseau moléculaire : Tanimoto médian des arêtes {{ s.network.edge_tanimoto_median | number(2) }}, contre {{ s.network.random_tanimoto_median | number(2) }} pour des paires au hasard.</p>{% endif %}
+</div>
+
+<h2 id="donnees">Données</h2>
+<div class="card scroll">
+<table><tbody>
+  <tr><th>Fichier</th><td><code>{{ s.dataset.file }}</code> (SHA-256 <code>{{ s.dataset.sha256[:16] }}…</code>)</td></tr>
+  <tr><th>Spectres lus / utilisés</th><td class="num">{{ s.dataset.n_loaded | number }} / {{ s.dataset.n_library | number }} (sans structure : {{ s.dataset.n_without_structure }}, rejetés au nettoyage : {{ s.dataset.n_rejected_cleaning }})</td></tr>
+  <tr><th>Composés distincts (InChIKey, 1er bloc)</th><td class="num">{{ s.dataset.n_compounds | number }}</td></tr>
+  <tr><th>Laboratoires</th><td class="num">{{ s.dataset.n_contributors }}</td></tr>
+  <tr><th>Types d'instruments</th><td>{% for k, v in s.dataset.instrument_types.items() %}{{ k }} : {{ v }}{% if not loop.last %} · {% endif %}{% endfor %}</td></tr>
+  <tr><th>Licences</th><td>{% for k, v in s.dataset.licenses.items() %}{{ k }} : {{ v }}{% if not loop.last %} · {% endif %}{% endfor %}</td></tr>
+  {% if s.curation %}<tr><th>Curation</th><td>{{ s.curation.n_kept | number }} spectres conservés sur {{ s.curation.n_input | number }} (export <code>{{ s.curation.input.msp }}</code>){% if s.curation.excluded_identifiers %}, dont {{ s.curation.excluded_identifiers | length }} mis de côté comme requêtes d'exemple{% endif %} ; erreur médiane du précurseur : {{ s.curation.median_abs_ppm | number(2) }} ppm</td></tr>{% endif %}
+  <tr><th>Doublons exacts</th><td>{{ s.dataset.duplicates.groups | number }} groupes de spectres identiques ({{ s.dataset.duplicates.spectra | number }} spectres), dont {{ s.dataset.duplicates.cross_contributor_groups }} entre contributeurs et {{ s.dataset.duplicates.conflicting_annotation_groups }} annotés comme des composés différents ; exclus des candidats de leur propre requête.</td></tr>
+</tbody></table>
+</div>
+{% for key in ["curation", "dataset"] %}{% if key in figures and figures[key].src %}
+<figure><img src="{{ figures[key].src }}" alt="{{ figures[key].title }}"><figcaption><strong>{{ figures[key].title }}.</strong> {{ figures[key].caption }}</figcaption></figure>
+{% endif %}{% endfor %}
+
+<h2 id="parametres">Paramètres</h2>
+<div class="card scroll"><table><tbody>
+{% for section in ["cleaning", "similarity", "identification", "analogs", "fingerprint", "network"] %}
+  <tr><th>{{ section }}</th><td>{% for k, v in s.config[section].items() %}<code>{{ k }} = {{ v }}</code> {% endfor %}</td></tr>
+{% endfor %}
+</tbody></table></div>
+
+<h2 id="methodes">Méthodes</h2>
+<div class="card"><ol>
+  <li><strong>Nettoyage</strong> : pics au-delà de précurseur − {{ s.config.cleaning.precursor_margin }} Da et sous {{ s.config.cleaning.min_relative_intensity * 100 }} % du pic de base retirés ; au plus {{ s.config.cleaning.max_peaks }} pics ; au moins {{ s.config.cleaning.min_peaks }} pics.</li>
+  <li><strong>Similarités</strong> (tolérance {{ s.config.similarity.tolerance }} Da) : cosine et modified cosine gloutons (intensités^{{ s.config.similarity.intensity_power }}, conventions de matchms) ; similarité d'entropie spectrale{% if s.config.similarity.entropy_weighted %} pondérée{% endif %} (Li et al., 2021).</li>
+  <li><strong>Identification</strong> : chaque spectre dont le composé a un autre spectre sert de requête ; candidats à moins de {{ s.config.identification.precursor_ppm }} ppm ; rang pessimiste en cas d'égalité ; scénarios tous laboratoires / autres laboratoires.</li>
+  <li><strong>Analogues</strong> : un spectre par composé ; tous les spectres du composé retirés ; candidats à moins de {{ s.config.analogs.max_mass_shift }} Da ; Tanimoto (Morgan, rayon {{ s.config.fingerprint.radius }}, {{ s.config.fingerprint.n_bits }} bits) entre la requête et le 1er résultat.</li>
+  <li><strong>Statistiques</strong> : IC de Wilson, test de McNemar exact (mesures appariées), test de Wilcoxon, corrélation de Spearman, IC bootstrap de la médiane.</li>
+</ol><p class="subtitle">Détails : <code>docs/methodology.md</code>.</p></div>
+
+<h2 id="identification">Identification</h2>
+<p>{{ ident.n_evaluated | number }} requêtes évaluées (sur {{ ident.n_eligible | number }} éligibles).</p>
+<div class="card scroll"><table>
+  <thead><tr><th>Scénario</th><th>Requêtes</th><th>Mesure</th><th>n</th><th>Top-1 [IC 95 %]</th><th>Top-3</th><th>Top-10</th><th>Hasard (top-1)</th></tr></thead>
+  <tbody>{% for r in ident.summary %}
+    <tr><td>{{ settings[r.setting] }}</td><td>{{ r.subset }}</td><td>{{ r.metric | label }}</td><td class="num">{{ r.n_queries | number }}</td>
+      <td class="num">{{ r.top1 | percent }} [{{ r.top1_ci_low | percent }} – {{ r.top1_ci_high | percent }}]</td>
+      <td class="num">{{ r.top3 | percent }}</td><td class="num">{{ r.top10 | percent }}</td><td class="num">{{ r.random_top1 | percent }}</td></tr>
+  {% endfor %}</tbody>
+</table></div>
+<h3>Comparaison appariée des mesures (McNemar exact, requêtes avec concurrents)</h3>
+<div class="card scroll"><table>
+  <thead><tr><th>Scénario</th><th>A</th><th>B</th><th>Top-1 A</th><th>Top-1 B</th><th>Seul A correct</th><th>Seul B correct</th><th>p</th></tr></thead>
+  <tbody>{% for r in ident.mcnemar %}
+    <tr><td>{{ settings[r.setting] }}</td><td>{{ r.metric_a | label }}</td><td>{{ r.metric_b | label }}</td><td class="num">{{ r.top1_a | percent }}</td><td class="num">{{ r.top1_b | percent }}</td><td class="num">{{ r.only_first }}</td><td class="num">{{ r.only_second }}</td><td class="num">{{ r.p_value | pvalue }}</td></tr>
+  {% endfor %}</tbody>
+</table></div>
+<h3>Seuil de score pour 95 % de précision (autres laboratoires, requêtes avec concurrents)</h3>
+<div class="card scroll"><table>
+  <thead><tr><th>Mesure</th><th>Seuil</th><th>Précision</th><th>Requêtes conservées</th></tr></thead>
+  <tbody>{% for r in ident.calibration_95 %}
+    <tr><td>{{ r.metric | label }}</td>{% if r.threshold is not none %}<td class="num">{{ r.threshold | number(2) }}</td><td class="num">{{ r.precision | percent }}</td><td class="num">{{ r.coverage | percent }}</td>{% else %}<td colspan="3">précision de 95 % jamais atteinte</td>{% endif %}</tr>
+  {% endfor %}</tbody>
+</table></div>
+{% for key in ["identification", "calibration"] %}{% if key in figures and figures[key].src %}
+<figure><img src="{{ figures[key].src }}" alt="{{ figures[key].title }}"><figcaption><strong>{{ figures[key].title }}.</strong> {{ figures[key].caption }}</figcaption></figure>
+{% endif %}{% endfor %}
+
+<h2 id="analogues">Recherche d'analogues</h2>
+<div class="card scroll"><table>
+  <thead><tr><th>Méthode</th><th>Requêtes</th><th>Tanimoto médian [IC 95 % bootstrap]</th><th>1er résultat proche [IC 95 %]</th></tr></thead>
+  <tbody>{% for r in an.summary %}
+    <tr><td>{{ r.method | label }}</td><td class="num">{{ r.n_queries | number }}</td>
+      <td class="num">{{ r.median_tanimoto | number(3) }} [{{ r.median_ci_low | number(3) }} – {{ r.median_ci_high | number(3) }}]</td>
+      <td class="num">{{ r.close_fraction | percent }}{% if r.close_ci_low is not none %} [{{ r.close_ci_low | percent }} – {{ r.close_ci_high | percent }}]{% endif %}</td></tr>
+  {% endfor %}</tbody>
+</table>
+<p class="subtitle">« Hasard » : Tanimoto moyen de tous les candidats de chaque requête ; « oracle » : meilleure structure disponible parmi eux.</p></div>
+<h3>Tests appariés (Wilcoxon, Tanimoto du 1er résultat)</h3>
+<div class="card scroll"><table>
+  <thead><tr><th>A</th><th>B</th><th>n</th><th>Différence médiane (A − B)</th><th>p</th></tr></thead>
+  <tbody>{% for r in an.tests %}<tr><td>{{ r.a | label }}</td><td>{{ r.b | label }}</td><td class="num">{{ r.n | number }}</td><td class="num">{{ r.median_difference | number(3) }}</td><td class="num">{{ r.p_value | pvalue }}</td></tr>{% endfor %}</tbody>
+</table></div>
+{% if "analogs" in figures and figures.analogs.src %}<figure><img src="{{ figures.analogs.src }}" alt="Analogues"><figcaption><strong>{{ figures.analogs.title }}.</strong> {{ figures.analogs.caption }}</figcaption></figure>{% endif %}
+
+<h2 id="relation">Similarité spectrale et similarité structurale</h2>
+<div class="card scroll"><table>
+  <thead><tr><th>Mesure</th><th>Paires (score > 0)</th><th>ρ de Spearman</th><th>p</th></tr></thead>
+  <tbody>{% for r in an.relation_stats %}<tr><td>{{ r.metric | label }}</td><td class="num">{{ r.n | number }}</td><td class="num">{{ r.rho | number(3) }}</td><td class="num">{{ r.p_value | pvalue }}</td></tr>{% endfor %}</tbody>
+</table><p class="subtitle">Tanimoto moyen de l'ensemble des candidats : {{ an.baseline_tanimoto | number(3) }}.</p></div>
+{% if "relation" in figures and figures.relation.src %}<figure><img src="{{ figures.relation.src }}" alt="Relation"><figcaption><strong>{{ figures.relation.title }}.</strong> {{ figures.relation.caption }}</figcaption></figure>{% endif %}
+
+<h2 id="reseau">Réseau moléculaire</h2>
+{% if s.network %}
+<div class="card scroll"><table><tbody>
+  <tr><th>Nœuds / arêtes</th><td class="num">{{ s.network.n_nodes | number }} / {{ s.network.n_edges | number }}</td></tr>
+  <tr><th>Nœuds connectés, composantes (≥ 2 nœuds), plus grande</th><td class="num">{{ s.network.n_connected_nodes | number }} · {{ s.network.n_components | number }} · {{ s.network.largest_component | number }}</td></tr>
+  <tr><th>Tanimoto médian : arêtes / paires au hasard</th><td class="num">{{ s.network.edge_tanimoto_median | number(3) }} / {{ s.network.random_tanimoto_median | number(3) }}</td></tr>
+  <tr><th>Arêtes reliant des structures proches (≥ {{ s.config.analogs.close_analog_threshold }})</th><td class="num">{{ s.network.edge_close.value | percent }} [{{ s.network.edge_close.ci95_low | percent }} – {{ s.network.edge_close.ci95_high | percent }}] contre {{ s.network.random_close.value | percent }} au hasard</td></tr>
+  <tr><th>Test de Mann-Whitney (arêtes > hasard)</th><td class="num">p = {{ s.network.mann_whitney_p | pvalue }}</td></tr>
+</tbody></table></div>
+{% if "network" in figures and figures.network.src %}<figure><img src="{{ figures.network.src }}" alt="Réseau"><figcaption><strong>{{ figures.network.title }}.</strong> {{ figures.network.caption }}</figcaption></figure>{% endif %}
+{% else %}<div class="note">Réseau moléculaire désactivé dans la configuration.</div>{% endif %}
+
+<h2 id="exemples">Exemples</h2>
+{% for e in s.examples %}{% set key = "example_" ~ loop.index %}{% if key in figures and figures[key].src %}
+<figure><img src="{{ figures[key].src }}" alt="{{ e.title }}"><figcaption><strong>{{ e.title }}.</strong> Requête : {{ e.query_name }} (<code>{{ e.query_id }}</code>) ; résultat : {{ e.hit_name }} (<code>{{ e.hit_id }}</code>) ; mesure : {{ e.metric | label }} ; Tanimoto : {{ e.tanimoto | number(2) }}. {{ example_caption }}</figcaption></figure>
+{% endif %}{% endfor %}
+
+<h2 id="interpretation">Interprétation</h2>
+<div class="levels">
+  <div class="card"><h3>Niveau technique</h3><p>Les similarités sont validées contre matchms (cosine, modified cosine) et ms_entropy (entropie) ; le moteur vectorisé donne les mêmes scores que les calculs paire par paire. Les résultats ci-dessus sont produits sans intervention manuelle.</p></div>
+  <div class="card"><h3>Niveau statistique</h3><p>Les métriques décrivent <em>ce</em> jeu de données (MassBank, spectres sous licence ouverte). Les intervalles couvrent l'incertitude d'échantillonnage des requêtes, pas la variabilité entre bibliothèques ni les erreurs d'annotation des spectres de référence.</p></div>
+  <div class="card"><h3>Niveau chimique</h3><p>Un score spectral élevé rend une structure proche plus probable, sans la garantir : un « analogue » proposé est une hypothèse à confirmer (standard de référence, données orthogonales comme le temps de rétention ou la mobilité ionique).</p></div>
+</div>
+
+<h2 id="limites">Limites</h2>
+<div class="card"><ul>
+  <li>Bibliothèque unique (MassBank, sous-ensemble sous licence ouverte) : les performances dépendent de sa composition (laboratoires, énergies de collision, classes chimiques).</li>
+  <li>Plusieurs spectres d'un même composé proviennent souvent du même laboratoire (énergies de collision différentes) : le scénario « tous laboratoires » est optimiste, d'où le scénario « autres laboratoires ».</li>
+  <li>Les stéréo-isomères partagent le premier bloc d'InChIKey : ils sont considérés comme le même composé (indiscernables en MS/MS classique).</li>
+  <li>Le Tanimoto sur empreintes de Morgan n'est qu'une mesure de similarité structurale parmi d'autres.</li>
+  <li>Aucune donnée expérimentale indépendante (temps de rétention, standard) n'est utilisée : une identification reste une annotation de niveau 2 au sens de la Metabolomics Standards Initiative.</li>
+</ul></div>
+
+<h2 id="reproductibilite">Reproductibilité</h2>
+<div class="card scroll"><table><tbody>
+  <tr><th>Commande</th><td><code>{{ s.command }}</code></td></tr>
+  <tr><th>Configuration</th><td><code>{{ s.config_file or "—" }}</code></td></tr>
+  <tr><th>Début / fin (UTC)</th><td>{{ s.created_utc }} → {{ s.finished_utc }}</td></tr>
+  <tr><th>Temps (s)</th><td>{% for k, v in s.timings_seconds.items() %}{{ k }} : {{ v | number(1) }}{% if not loop.last %} · {% endif %}{% endfor %}</td></tr>
+  {% for k, v in s.versions.items() %}<tr><th>{{ k }}</th><td>{{ v }}</td></tr>{% endfor %}
+</tbody></table>
+<p class="subtitle">Calcul déterministe : mêmes données, mêmes paramètres et même graine donnent les mêmes résultats.</p></div>
+</main>
+</body>
+</html>

@@ -167,3 +167,15 @@ def test_search_warns_about_unknown_adduct(tmp_path):
     )
     assert result.exit_code == 0, result.output
     assert "adduit [M+Na]+ absent" in result.output
+
+
+def test_demo_config_is_found_from_a_subfolder(monkeypatch):
+    from pathlib import Path
+
+    from msannot import cli
+
+    root = Path(__file__).resolve().parents[2]
+    assert cli.find_demo_config(root / "docs") == root / "config" / "demo.yaml"
+    monkeypatch.setattr(cli, "DEMO_CONFIG", Path("config") / "absente.yaml")
+    with pytest.raises(cli.MsannotError, match="introuvable"):
+        cli.find_demo_config(root / "docs")

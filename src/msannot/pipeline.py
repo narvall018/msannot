@@ -52,7 +52,7 @@ from msannot.plotting import (
 )
 from msannot.processing.cleaning import clean_all
 from msannot.processing.curation import CurationReport, curate
-from msannot.search.library import SpectralLibrary
+from msannot.search.library import SpectralLibrary, rank_order
 
 logger = get_logger(__name__)
 
@@ -173,6 +173,24 @@ def _preferred(metrics: tuple[Metric, ...], choice: Metric) -> Metric:
     return choice if choice in metrics else metrics[0]
 
 
+def _best_candidate(
+    library: SpectralLibrary, query_index: int, metric: Metric, ppm: float, correct: bool
+) -> int | None:
+    """Meilleur candidat correct (ou incorrect) d'une requête, scénario autres laboratoires."""
+    query = library.spectra[query_index]
+    allowed = (
+        library.precursor_window(query.precursor_mz, ppm)
+        & (library.contributors != query.contributor)
+        & (library.duplicates != library.duplicates[query_index])
+        & ((library.inchikeys == query.inchikey14) == correct)
+    )
+    if not allowed.any():
+        return None
+    scores, matches = library.scores(query, metric, allowed)
+    best = int(rank_order(np.where(allowed, scores, -1.0), matches)[0])
+    return best if allowed[best] else None
+
+
 def select_examples(
     library: SpectralLibrary,
     identification: IdentificationResult,
@@ -180,56 +198,57 @@ def select_examples(
     fingerprints: FingerprintIndex,
     config: BenchmarkConfig,
 ) -> list[Example]:
-    """Choisit des exemples de façon déterministe (aucune sélection manuelle)."""
+    """Choisit des exemples par des règles fixes (aucune sélection manuelle).
+
+    - réussite « typique » : score du bon composé le plus proche de la médiane des réussites ;
+    - erreur la plus nette : plus grand écart entre le meilleur mauvais composé et le bon ;
+    - analogue : meilleur score parmi les analogues proches (0,5 ≤ Tanimoto < 0,95) portant
+      une vraie modification (écart de masse ≥ 1 Da).
+    Les exemples d'identification relèvent du scénario « autres laboratoires ».
+    """
     examples: list[Example] = []
     metric = _preferred(config.similarity.metrics, "entropy")
+    ppm = config.identification.precursor_ppm
     rows = identification.queries
     realistic = rows[
         (rows["setting"] == "other_labs")
         & (rows["metric"] == metric)
         & rows["reachable"]
         & (rows["n_competitor_compounds"] > 0)
-    ].sort_values(["top1_score", "query_index"], ascending=[False, True])
-    successes = realistic[realistic["top1_correct"].astype(bool)]
-    if not successes.empty:  # réussite « typique » : score le plus proche de la médiane
-        distance = (successes["top1_score"] - successes["top1_score"].median()).abs()
-        successes = successes.assign(distance=distance).sort_values(["distance", "query_index"])
-    for kind, title, subset in (
-        ("success", "Identification typique réussie malgré des composés de même masse", successes),
+    ]
+    correct = realistic["top1_correct"].astype(bool)
+    successes = realistic[correct]
+    if not successes.empty:
+        distance = (successes["correct_score"] - successes["correct_score"].median()).abs()
+        successes = successes.assign(order=distance).sort_values(["order", "query_index"])
+    failures = realistic[~correct]
+    if not failures.empty:
+        margin = failures["top1_score"] - failures["correct_score"]
+        failures = failures.assign(order=-margin).sort_values(["order", "query_index"])
+    for kind, title, subset, want_correct in (
+        (
+            "success",
+            "Identification typique réussie malgré des composés de même masse",
+            successes,
+            True,
+        ),
         (
             "failure",
-            "Erreur d'identification la plus « confiante »",
-            realistic[~realistic["top1_correct"].astype(bool)],
+            "Erreur la plus nette : un autre composé devance nettement le bon",
+            failures,
+            False,
         ),
     ):
         if subset.empty:
             continue
         query_index = int(subset.iloc[0]["query_index"])
-        query = library.spectra[query_index]
-        exclude = (library.contributors == query.contributor) | (
-            library.duplicates == library.duplicates[query_index]
-        )
-        hits = library.search(
-            query,
-            metric=metric,
-            mode="identity",
-            top_k=1,
-            exclude=exclude,
-            ppm=config.identification.precursor_ppm,
-        )
-        if hits.empty:
+        hit_index = _best_candidate(library, query_index, metric, ppm, want_correct)
+        if hit_index is None:
             continue
-        hit_index = int(hits.iloc[0]["library_index"])
-        examples.append(
-            Example(
-                kind,
-                title,
-                query_index,
-                hit_index,
-                metric,
-                fingerprints.similarity(query.inchikey14, library.spectra[hit_index].inchikey14),
-            )
-        )
+        query = library.spectra[query_index]
+        tanimoto = fingerprints.similarity(query.inchikey14, library.spectra[hit_index].inchikey14)
+        examples.append(Example(kind, title, query_index, hit_index, metric, tanimoto))
+
     analog_metric = _preferred(config.similarity.metrics, "modified_cosine")
     candidates = analogs.queries[
         (analogs.queries["metric"] == analog_metric)
@@ -244,7 +263,7 @@ def select_examples(
         examples.append(
             Example(
                 "analog",
-                "Analogue structural trouvé grâce aux pics décalés (molécule absente)",
+                "Analogue structural trouvé (molécule recherchée absente de la bibliothèque)",
                 int(row["query_index"]),
                 hit_index,
                 analog_metric,

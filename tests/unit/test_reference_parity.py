@@ -31,7 +31,14 @@ def _related_pairs(sample, metric, n_queries=8, per_query=40):
 
 def test_cosine_and_modified_cosine_match_matchms(sample):
     matchms = pytest.importorskip("matchms")
-    from matchms.similarity import CosineGreedy, ModifiedCosineGreedy
+    from matchms import similarity as reference_similarity
+
+    # ModifiedCosine a été renommé ModifiedCosineGreedy dans matchms 0.33.
+    CosineGreedy = reference_similarity.CosineGreedy
+    ModifiedCosineGreedy = (
+        getattr(reference_similarity, "ModifiedCosineGreedy", None)
+        or reference_similarity.ModifiedCosine
+    )
 
     def convert(s):
         return matchms.Spectrum(

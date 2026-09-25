@@ -108,3 +108,29 @@ def test_prepare_requires_licenses_for_open_only(tmp_path):
         app, ["prepare", "--msp", str(msp), "-o", str(tmp_path / "o.msp.gz"), "--open-only"]
     )
     assert result.exit_code == 1
+
+
+def test_search_min_score(tmp_path):
+    result = runner.invoke(
+        app,
+        [
+            "-q",
+            "search",
+            str(EXAMPLE_QUERIES),
+            "-l",
+            str(DEMO_LIBRARY),
+            "--top",
+            "10",
+            "--min-score",
+            "0.9",
+            "-o",
+            str(tmp_path),
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    hits = pd.read_csv(tmp_path / "hits.tsv", sep="\t")
+    assert len(hits) > 0 and (hits["score"] >= 0.9).all()
+    rejected = runner.invoke(
+        app, ["search", str(EXAMPLE_QUERIES), "-l", str(DEMO_LIBRARY), "--min-score", "1.5"]
+    )
+    assert rejected.exit_code != 0

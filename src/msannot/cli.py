@@ -178,6 +178,12 @@ def search(
     outdir: Annotated[Path, typer.Option("--outdir", "-o", help="Dossier de sortie.")] = Path(
         "results/search"
     ),
+    min_score: Annotated[
+        float,
+        typer.Option(
+            help="Score minimal des résultats conservés (voir la calibration).", min=0, max=1
+        ),
+    ] = 0.0,
 ) -> None:
     """Recherche des spectres dans une bibliothèque ; écrit résultats et spectres miroirs."""
     import pandas as pd
@@ -218,6 +224,7 @@ def search(
             max_mass_shift=max_shift,
             exclude=exclude,
         )
+        hits = hits[hits["score"] >= min_score].reset_index(drop=True)
         hits.insert(0, "query_id", query.identifier)
         all_hits.append(hits)
         table = Table(title=f"{query.identifier} — {query.name} (m/z {query.precursor_mz:.4f})")

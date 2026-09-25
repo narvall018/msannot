@@ -184,6 +184,9 @@ def search(
             help="Score minimal des résultats conservés (voir la calibration).", min=0, max=1
         ),
     ] = 0.0,
+    figures: Annotated[
+        bool, typer.Option(help="Spectre miroir du meilleur résultat (--no-figures : TSV seul).")
+    ] = True,
 ) -> None:
     """Recherche des spectres dans une bibliothèque ; écrit résultats et spectres miroirs."""
     import pandas as pd
@@ -240,7 +243,7 @@ def search(
                 str(row["contributor"]),
             )
         console.print(table if len(hits) else f"{query.identifier} : aucun résultat")
-        if len(hits):
+        if figures and len(hits):
             best = spectral_library.spectra[int(hits.iloc[0]["library_index"])]
             figure = mirror_figure(
                 cleaned, best, chosen_metric, similarity, title=f"{query.name} — meilleur résultat"

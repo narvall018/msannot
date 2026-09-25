@@ -134,3 +134,22 @@ def test_search_min_score(tmp_path):
         app, ["search", str(EXAMPLE_QUERIES), "-l", str(DEMO_LIBRARY), "--min-score", "1.5"]
     )
     assert rejected.exit_code != 0
+
+
+def test_search_without_figures(tmp_path):
+    result = runner.invoke(
+        app,
+        [
+            "-q",
+            "search",
+            str(EXAMPLE_QUERIES),
+            "-l",
+            str(DEMO_LIBRARY),
+            "--no-figures",
+            "-o",
+            str(tmp_path),
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    assert (tmp_path / "hits.tsv").is_file()
+    assert not (tmp_path / "figures").exists()

@@ -1,0 +1,109 @@
+{
+  "n_input": 139006,
+  "excluded": {
+    "type de spectre différent de MS2": 22028,
+    "mode d'ionisation non retenu": 38390,
+    "adduit non retenu": 9605,
+    "instrument non retenu": 5168,
+    "licence non retenue": 29969,
+    "précurseur absent ou illisible": 287,
+    "structure absente ou invalide": 260,
+    "InChIKey incohérent avec le SMILES": 0,
+    "molécule chargée": 92,
+    "masse du précurseur incohérente": 39,
+    "trop peu de pics après nettoyage": 9674
+  },
+  "n_kept": 23494,
+  "n_compounds": 3958,
+  "licenses": {
+    "CC BY 4.0": 19580,
+    "CC0 1.0": 3914
+  },
+  "contributors": {
+    "Eawag": 5170,
+    "mFam": 3243,
+    "LCSB": 2620,
+    "NaToxAq": 2453,
+    "Athens_Univ": 2295,
+    "HBM4EU": 1680,
+    "UFZ": 1606,
+    "EPA": 1050,
+    "ACES_SU": 867,
+    "Antwerp_Univ": 624,
+    "MSSJ": 496,
+    "BGC_Munich": 440,
+    "Eawag_Additional_Specs": 385,
+    "CASMI_2016": 312,
+    "KWR": 87,
+    "Env_Anal_Chem_U_Tuebingen": 53,
+    "AGILENT": 36,
+    "UoB": 30,
+    "IPB_Halle": 21,
+    "UPAO": 7,
+    "CPU": 6,
+    "NILU": 5,
+    "CASMI_2012": 4,
+    "UvA_IBED": 4
+  },
+  "instrument_types": {
+    "LC-ESI-ITFT": 9145,
+    "LC-ESI-QFT": 7243,
+    "LC-ESI-QTOF": 4607,
+    "ESI-QTOF": 1458,
+    "ESI-TOF": 1011,
+    "LC-ESI-FT": 30
+  },
+  "median_abs_ppm": 0.08999349354966608,
+  "parameters": {
+    "allowed_licenses": [
+      "CC BY 4.0",
+      "CC0 1.0"
+    ],
+    "instrument_types": [
+      "LC-ESI-QTOF",
+      "LC-ESI-QFT",
+      "LC-ESI-ITFT",
+      "LC-ESI-TOF",
+      "LC-ESI-FT",
+      "ESI-QTOF",
+      "ESI-TOF"
+    ],
+    "precursor_types": [
+      "[M+H]+"
+    ],
+    "ion_mode": "POSITIVE",
+    "precursor_ppm": 10.0,
+    "precursor_abs_tolerance": 0.005,
+    "cleaning": {
+      "precursor_margin": 1.6,
+      "min_relative_intensity": 0.01,
+      "max_peaks": 100,
+      "min_peaks": 5
+    },
+    "input_msp": "MassBank_NISTformat.msp",
+    "licenses_json": "MassBank.json"
+  },
+  "n_written": 23491,
+  "excluded_identifiers": [
+    "MSBNK-ACES_SU-AS000529",
+    "MSBNK-ACES_SU-AS000877",
+    "MSBNK-ACES_SU-AS000913"
+  ],
+  "input": {
+    "msp": "MassBank_NISTformat.msp",
+    "sha256": "cf49e1b293f1c8c1b4a645123638826eea70db656bd76e09ea0c47a1a56fc269"
+  },
+  "created_utc": "2026-09-25T14:59:13.280450+00:00",
+  "versions": {
+    "python": "3.12.3",
+    "platform": "Linux-6.8.0-59-generic-x86_64-with-glibc2.39",
+    "msannot": "0.1.0",
+    "rdkit": "2026.3.6",
+    "numpy": "2.5.3",
+    "scipy": "1.16.3",
+    "pandas": "3.0.6",
+    "matplotlib": "3.11.2",
+    "networkx": "3.4.2",
+    "pydantic": "2.13.5"
+  }
+}

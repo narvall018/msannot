@@ -1,0 +1,44 @@
+# Configuration de référence : toutes les options et leur valeur par défaut.
+# Copiez ce fichier, indiquez votre bibliothèque, puis : msannot benchmark ma_config.yaml
+# Les chemins relatifs sont résolus par rapport au dossier de ce fichier.
+
+dataset: ../data/demo/massbank_open.msp.gz   # bibliothèque MSP (structures SMILES requises)
+output_dir: ../results/benchmark
+curation_report: null                        # défaut : <bibliothèque>.curation.json s'il existe
+
+cleaning:
+  precursor_margin: 1.6          # retire les pics > précurseur − 1,6 Da
+  min_relative_intensity: 0.01   # retire les pics < 1 % du pic de base
+  max_peaks: 100                 # garde les 100 pics les plus intenses
+  min_peaks: 5                   # rejette les spectres plus pauvres
+
+similarity:
+  tolerance: 0.01                # tolérance sur les fragments (Da)
+  intensity_power: 0.5           # cosine : intensités^0,5
+  entropy_weighted: true         # entropie pondérée (Li et al., 2021)
+  metrics: [cosine, modified_cosine, entropy]
+
+identification:
+  precursor_ppm: 10              # fenêtre de précurseur des candidats
+  top_k: [1, 3, 10]
+  max_queries: null              # null = toutes les requêtes éligibles
+  seed: 0
+
+analogs:
+  max_mass_shift: 200            # écart de masse maximal des candidats (Da)
+  n_queries: null                # null = un spectre par composé
+  seed: 0
+  close_analog_threshold: 0.7    # Tanimoto à partir duquel un analogue est « proche »
+
+fingerprint:
+  radius: 2                      # Morgan rayon 2 ≈ ECFP4
+  n_bits: 2048
+
+network:
+  enabled: true
+  metric: modified_cosine
+  min_score: 0.7                 # paramètres par défaut de GNPS
+  min_matches: 6
+  top_k: 10
+
+figure_dpi: 130

@@ -1,0 +1,15 @@
+# Démonstration (lancée par `msannot demo` ou `make demo`) : environ 1 minute.
+# Bibliothèque : spectres MassBank sous licence CC BY 4.0 / CC0 (voir data/README.md).
+# Les requêtes sont échantillonnées (graine fixe) pour que la démo reste rapide ;
+# config/full.yaml évalue toutes les requêtes (résultats de docs/results.md).
+
+dataset: ../data/demo/massbank_open.msp.gz
+output_dir: ../results/demo
+
+identification:
+  max_queries: 5000
+  seed: 0
+
+analogs:
+  n_queries: 1000
+  seed: 0

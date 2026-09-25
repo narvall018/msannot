@@ -1,0 +1,5 @@
+# Évaluation complète : toutes les requêtes de la bibliothèque de démonstration
+# (environ 4 minutes). Ce sont les résultats rapportés dans docs/results.md.
+
+dataset: ../data/demo/massbank_open.msp.gz
+output_dir: ../results/full

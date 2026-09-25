@@ -5,6 +5,27 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) ; ve
 
 ## [Non publié]
 
+### Ajouté
+
+- `msannot search --min-score` : ne garde que les résultats au-dessus d'un seuil de score.
+- `msannot search --no-figures` : résultats TSV seulement.
+- `msannot search` avertit quand l'adduit d'une requête est absent de la bibliothèque.
+- `msannot validate` affiche le nombre de laboratoires contributeurs.
+- `make check` : lint, types et tests en une commande.
+- Marqueur `py.typed` (PEP 561), `.editorconfig`, `.gitattributes`.
+- Dependabot pour les GitHub Actions.
+- Tests : recherche de `config/demo.yaml`, bilan des doublons exacts.
+
+### Corrigé
+
+- Image Docker : ajout de `libexpat1`, requise par le rendu des molécules de RDKit. La démo
+  échouait dans le conteneur ; le problème a été détecté par la CI.
+
+### Modifié
+
+- CI : durée maximale par job.
+- Dépannage : bibliothèques système de RDKit et vérification avec `ldd`.
+
 ## [0.1.0] — 2026-09-25
 
 Première version publique.

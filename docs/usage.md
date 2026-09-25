@@ -45,6 +45,13 @@ msannot search requetes.mgf -l bibliotheque.msp.gz \
 - `identity` : candidats de même masse (± ppm).
 - `analog` : candidats dont la masse diffère d'au plus `--max-shift` Da.
 - Mesures disponibles : `cosine`, `modified_cosine`, `entropy`.
+- `--min-score 0.85` : ne garde que les résultats au-dessus d'un seuil. Dans l'évaluation
+  complète (autres laboratoires, requêtes avec isomères), 0,85 en entropie ou 0,90 en cosine
+  donnent environ 95 % de premiers résultats corrects (`docs/results.md`).
+- `--no-figures` : résultats TSV seulement, sans spectre miroir (utile pour de nombreuses
+  requêtes).
+- Un avertissement s'affiche si l'adduit d'une requête (par exemple [M+Na]+) est absent de
+  la bibliothèque : la fenêtre de précurseur ne peut alors pas retrouver le bon composé.
 
 Formats de requête acceptés : MGF (`BEGIN IONS` / `PEPMASS=`) ou MSP, compressés en gzip ou
 non. Les requêtes sont nettoyées comme la bibliothèque.

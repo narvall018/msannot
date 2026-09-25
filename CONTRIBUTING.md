@@ -6,14 +6,14 @@
 git clone https://github.com/narvall018/msannot.git && cd msannot
 make install && source .venv/bin/activate   # inclut matchms et ms_entropy (tests de parité)
 pre-commit install
-make test && make lint
+make check                # lint, types et tests
 ```
 
 ## Déroulement
 
 1. Ouvrez une *issue* avant un changement important.
 2. Travaillez sur une branche (`git switch -c feat/…`), avec de petits commits explicites.
-3. Vérifiez : `make lint`, `make test`, et `msannot demo` si les résultats peuvent changer.
+3. Vérifiez : `make check`, et `msannot demo` si les résultats peuvent changer.
 4. Ouvrez une *pull request* en remplissant le modèle. La CI doit être verte.
 
 ## Conventions

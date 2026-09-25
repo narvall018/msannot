@@ -1,0 +1,132 @@
+[build-system]
+requires = ["hatchling>=1.26"]
+build-backend = "hatchling.build"
+
+[project]
+name = "msannot"
+version = "0.1.0"
+description = "Annotation de petites molécules par spectres MS/MS : recherche en bibliothèque, analogues structuraux et évaluation rigoureuse."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Julien Sade" }]
+keywords = [
+  "cheminformatics",
+  "mass-spectrometry",
+  "metabolomics",
+  "spectral-library",
+  "rdkit",
+  "spectral-entropy",
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Science/Research",
+  "Natural Language :: French",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Scientific/Engineering :: Chemistry",
+  "Topic :: Scientific/Engineering :: Bio-Informatics",
+]
+dependencies = [
+  "jinja2>=3.1",
+  "matplotlib>=3.8",
+  "networkx>=3.2",
+  "numpy>=1.26",
+  "pandas>=2.1",
+  "pydantic>=2.5",
+  "pyyaml>=6.0",
+  "rdkit>=2023.9.1",
+  "rich>=13.0",
+  "scipy>=1.11",
+  "typer>=0.12",
+]
+
+[project.optional-dependencies]
+app = ["plotly>=5.20", "streamlit>=1.35"]
+dev = [
+  "mypy>=1.10",
+  "pandas-stubs>=2.1",
+  "pre-commit>=3.7",
+  "pytest>=8.0",
+  "pytest-cov>=5.0",
+  "ruff>=0.6",
+  "scipy-stubs>=1.14",
+  "types-PyYAML>=6.0",
+]
+# Implémentations de référence, utilisées uniquement par les tests de parité.
+ref = ["matchms>=0.28", "ms_entropy>=1.2"]
+
+[project.scripts]
+msannot = "msannot.cli:app"
+
+[project.urls]
+Homepage = "https://github.com/narvall018/msannot"
+Documentation = "https://github.com/narvall018/msannot/tree/main/docs"
+Issues = "https://github.com/narvall018/msannot/issues"
+Changelog = "https://github.com/narvall018/msannot/blob/main/CHANGELOG.md"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/msannot"]
+
+# --------------------------------------------------------------------------- ruff
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests", "app", "scripts"]
+
+[tool.ruff.lint]
+select = ["B", "C4", "D", "E", "F", "I", "N", "PTH", "RUF", "SIM", "UP", "W"]
+ignore = [
+  "D105",   # docstring des méthodes magiques
+  "D107",   # docstring de __init__
+  "D401",   # « mood impératif » : règle propre à l'anglais, sans objet en français
+  "RUF001", # caractères « ambigus » : légitimes dans un texte en français
+  "RUF002",
+  "RUF003",
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["D", "N802", "N806"]
+"app/**" = ["D103"]
+"scripts/**" = ["D103"]
+
+# --------------------------------------------------------------------------- mypy
+[tool.mypy]
+files = ["src/msannot"]
+plugins = ["pydantic.mypy"]
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_return_any = true
+strict_equality = true
+
+[[tool.mypy.overrides]]
+module = ["rdkit", "rdkit.*", "plotly", "plotly.*", "networkx", "networkx.*"]
+ignore_missing_imports = true
+
+# --------------------------------------------------------------------------- pytest
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+markers = [
+  "integration: tests de bout en bout sur les données de démonstration",
+]
+
+[tool.coverage.run]
+source = ["msannot"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+exclude_also = ["if TYPE_CHECKING:", "raise NotImplementedError"]

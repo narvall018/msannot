@@ -23,6 +23,7 @@ def test_validate_demo_library():
     result = runner.invoke(app, ["validate", str(DEMO_LIBRARY)])
     assert result.exit_code == 0, result.output
     assert "Fichier valide" in result.output
+    assert "Laboratoires" in result.output and "24" in result.output
 
 
 def test_validate_reports_errors_cleanly(tmp_path):

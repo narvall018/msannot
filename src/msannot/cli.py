@@ -148,6 +148,8 @@ def validate(
     table.add_row("Spectres", str(len(spectra)))
     table.add_row("Avec structure (SMILES)", str(sum(bool(s.smiles) for s in spectra)))
     table.add_row("Composés (InChIKey, 1er bloc)", str(len({s.inchikey14 for s in spectra} - {""})))
+    contributors = {s.get("contributor") for s in spectra} - {""}
+    table.add_row("Laboratoires (contributeurs)", str(len(contributors)) if contributors else "—")
     table.add_row("m/z du précurseur", f"{precursors.min():.2f} – {precursors.max():.2f}")
     table.add_row("Pics par spectre (médiane)", f"{np.median(peaks):.0f}")
     for label, key in (

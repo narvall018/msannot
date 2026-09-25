@@ -5,9 +5,9 @@
 #       run app/streamlit_app.py --server.address 0.0.0.0                   # dashboard
 FROM python:3.12-slim
 
-# Bibliothèques X11 requises par le rendu des molécules de RDKit (Cairo).
+# Bibliothèques système requises par le rendu des molécules de RDKit (Cairo, fontconfig).
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends libxrender1 libxext6 \
+    && apt-get install -y --no-install-recommends libxrender1 libxext6 libexpat1 \
     && rm -rf /var/lib/apt/lists/*
 
 ENV PYTHONDONTWRITEBYTECODE=1 \

@@ -211,8 +211,16 @@ def search(
         library_spectra, _ = clean_all(load_msp(library), cleaning)
         spectral_library = SpectralLibrary(library_spectra, similarity)
         query_spectra = load_spectra(queries)
+    library_adducts = {s.get("precursor_type") for s in library_spectra} - {""}
     all_hits = []
     for query in query_spectra:
+        adduct = query.get("precursor_type")
+        if adduct and library_adducts and adduct not in library_adducts:
+            console.print(
+                f"[yellow]⚠ {query.identifier} : adduit {adduct} absent de la bibliothèque "
+                f"({', '.join(sorted(library_adducts))}) ; le bon composé ne peut pas être "
+                "trouvé par sa masse.[/]"
+            )
         cleaned = clean_spectrum(query, cleaning)
         if cleaned is None:
             console.print(f"[yellow]⚠ {query.identifier} : trop peu de pics après nettoyage[/]")

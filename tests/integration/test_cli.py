@@ -153,3 +153,17 @@ def test_search_without_figures(tmp_path):
     assert result.exit_code == 0, result.output
     assert (tmp_path / "hits.tsv").is_file()
     assert not (tmp_path / "figures").exists()
+
+
+def test_search_warns_about_unknown_adduct(tmp_path):
+    query = tmp_path / "sodium.mgf"
+    query.write_text(
+        "BEGIN IONS\nTITLE=test\nPEPMASS=217.0692\nADDUCT=[M+Na]+\n"
+        "110.0712 30\n138.0662 100\n123.043 20\n83.06 10\n69.045 5\nEND IONS\n"
+    )
+    result = runner.invoke(
+        app,
+        ["-q", "search", str(query), "-l", str(DEMO_LIBRARY), "--no-figures", "-o", str(tmp_path)],
+    )
+    assert result.exit_code == 0, result.output
+    assert "adduit [M+Na]+ absent" in result.output

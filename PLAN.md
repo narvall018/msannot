@@ -75,18 +75,18 @@ app/               # dashboard Streamlit (interface uniquement)
 
 - [x] Choix du sujet ; exploration de MassBank (licences, volumes, qualité)
 - [x] Vérification préalable : formule d'entropie décomposée == ms_entropy
-- [ ] Squelette, configuration, E/S (MSP, MGF, licences)
-- [ ] Chimie (RDKit) et curation
-- [ ] Similarités de référence + index vectorisé + tests de parité matchms/ms_entropy
-- [ ] Moteur de recherche
-- [ ] Évaluations (identification, analogues, spectre/structure, réseau) + statistiques
-- [ ] Figures, rapport, pipeline, CLI
-- [ ] Jeu de démonstration (CC BY/CC0) + attribution
-- [ ] Tests (unitaires, intégration, CLI, dashboard)
-- [ ] Dashboard Streamlit
-- [ ] Docker, Makefile, CI, pre-commit
-- [ ] Documentation et README avec résultats réels
-- [ ] Vérification finale, publication GitHub (nouveau dépôt public)
+- [x] Squelette, configuration, E/S (MSP, MGF, licences)
+- [x] Chimie (RDKit) et curation
+- [x] Similarités de référence + index vectorisé + tests de parité matchms/ms_entropy
+- [x] Moteur de recherche
+- [x] Évaluations (identification, analogues, spectre/structure, réseau) + statistiques
+- [x] Figures, rapport, pipeline, CLI
+- [x] Jeu de démonstration (CC BY/CC0) + attribution
+- [x] Tests (unitaires, intégration, CLI, dashboard)
+- [x] Dashboard Streamlit
+- [x] Docker, Makefile, CI, pre-commit
+- [x] Documentation et README avec résultats réels
+- [x] Vérification finale, publication GitHub (nouveau dépôt public)
 
 ## 6. Règles scientifiques
 
@@ -94,3 +94,18 @@ app/               # dashboard Streamlit (interface uniquement)
 - Séparation stricte des niveaux technique, statistique et biologique/chimique.
 - Paramètres par défaut fixés a priori (littérature) ; toute comparaison sur les données de
   démonstration est présentée comme telle.
+
+## 7. Décisions prises en cours de route
+
+- **Référence aléatoire trop haute** : la masse seule identifie déjà environ 80 % des
+  requêtes, car MassBank contient peu d'isomères. D'où le sous-ensemble « requêtes avec
+  concurrents », seul à mesurer vraiment le pouvoir discriminant du spectre.
+- **Doublons exacts** : 360 groupes de spectres identiques, dont 55 annotés comme des
+  composés différents. Ils sont exclus des candidats de leur propre requête.
+- **Arithmétique flottante** : les m/z arrondis à 4 décimales créent de nombreux écarts
+  exactement égaux à la tolérance. L'index revérifie chaque paire avec les mêmes opérations
+  que matchms.
+- **Exemples** : ils sont choisis par des règles fixes, et l'exemple d'erreur montre le
+  meilleur candidat incorrect, en cohérence avec le rang pessimiste.
+- **Bogue trouvé par les tests** : `bincount` d'une liste vide renvoie des entiers, ce qui
+  tronquait les scores quand toutes les paires étaient en conflit. Corrigé.

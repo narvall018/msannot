@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "msannot"
-version = "0.1.0"
+version = "0.1.1"
 description = "Annotation de petites molécules par spectres MS/MS : recherche en bibliothèque, analogues structuraux et évaluation rigoureuse."
 readme = "README.md"
 requires-python = ">=3.11"

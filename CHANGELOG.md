@@ -5,6 +5,8 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) ; ve
 
 ## [Non publié]
 
+## [0.1.1] — 2026-09-25
+
 ### Ajouté
 
 - `msannot search --min-score` : ne garde que les résultats au-dessus d'un seuil de score.
@@ -60,5 +62,6 @@ Première version publique.
 - **Documentation** : README, 9 documents dans `docs/`, script de validation des
   similarités.
 
-[Non publié]: https://github.com/narvall018/msannot/compare/v0.1.0...HEAD
+[Non publié]: https://github.com/narvall018/msannot/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/narvall018/msannot/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/narvall018/msannot/releases/tag/v0.1.0

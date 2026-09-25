@@ -9,15 +9,18 @@ interpréteur explicitement :
 make install PYTHON=/usr/bin/python3.12
 ```
 
-### `ImportError: libXrender.so.1` (RDKit, dessin des molécules)
+### `ImportError: libXrender.so.1` ou `libexpat.so.1` (RDKit, dessin des molécules)
 
-Sur une image Linux minimale, le rendu Cairo de RDKit a besoin de bibliothèques X11 :
+Sur une image Linux minimale (par exemple `python:3.12-slim`), le module de dessin de RDKit
+a besoin de bibliothèques système :
 
 ```bash
-sudo apt-get install libxrender1 libxext6
+sudo apt-get install libxrender1 libxext6 libexpat1
 ```
 
-Le Dockerfile les installe déjà.
+Pour vérifier qu'il n'en manque aucune :
+`ldd "$(python -c 'import rdkit.Chem.Draw.rdMolDraw2D as m; print(m.__file__)')" | grep "not found"`.
+Le Dockerfile les installe déjà : `libexpat1` y a été ajoutée après un échec de la CI.
 
 ### `msannot demo` : « config/demo.yaml introuvable »
 
